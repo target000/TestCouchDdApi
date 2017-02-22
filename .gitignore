@@ -1,0 +1,9 @@
+packages/
+ConsoleApplication2/obj/
+ConsoleApplication2/bin/
+*.sln
+*.suo
+ConsoleApplication2/App.config
+ConsoleApplication2/ConsoleApplication2.csproj
+ConsoleApplication2/packages.config
+ConsoleApplication2/Properties/AssemblyInfo.cs
