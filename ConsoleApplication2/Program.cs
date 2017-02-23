@@ -38,6 +38,7 @@ namespace ConsoleApplication2
             string filepath = @"C:\Users\xlu.APPBRIDGE\Desktop\db_comp.pdf";
             string attachmentName = "test1";
             string documentId = "whatever";
+            string fileOutPath = @"C:\Users\xlu.APPBRIDGE\Desktop\nice_crap.pdf";
 
             //var byteArr = TurnFile2Byte(filepath);
             //PostAttachment(byteArr, username, password, database, id);
@@ -45,51 +46,51 @@ namespace ConsoleApplication2
             var byteArr = GetAttachment(documentId, attachmentName, username, password, database);
             var byteArrRes = byteArr.Result;
 
-            SaveArr2File(byteArrRes);
+            SaveArr2File(byteArrRes, fileOutPath);
 
-            Console.ReadKey();
-
+            //Console.ReadKey();
         }
 
-        public static async Task<byte[]> GetAttachment(string documentId, string attachmentName, string username, string password, string database)
+        private static string SetupConnString(string username, string password)
         {
+            if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password))
+            {
+                return null;
+            }
+
             const string ipaddress = "localhost";
             const string port = "5984";
 
             string connString = string.Format("http://{0}:{1}@{2}:{3}", username, password, ipaddress, port);
 
-            var client = new MyCouchClient(connString, database);
+            return connString;
+        }
 
-            AttachmentResponse response = await client.Attachments.GetAsync(documentId, attachmentName);
+        public static async Task<byte[]> GetAttachment(string documentId, string attachmentName, string username, string password, string database)
+        {
+            string connString = SetupConnString(username, password);
+
+            var client = new MyCouchClient(connString, database);
+            var response = await client.Attachments.GetAsync(documentId, attachmentName);
 
             return response.Content;
         }
 
         public static async void PostAttachment(byte[] byteArr, string username, string password, string database, string id)
         {
-            const string ipaddress = "localhost";
-            const string port = "5984";
-
-            string connString = string.Format("http://{0}:{1}@{2}:{3}", username, password, ipaddress, port);
+            string connString = SetupConnString(username, password);
 
             var request = new PutAttachmentRequest(id, "test1", HttpContentTypes.Text, byteArr);
-
             var client = new MyCouchClient(connString, database);
-
             var response = await client.Attachments.PutAsync(request);
 
             Console.WriteLine(response.IsSuccess);
-
             Console.WriteLine(response.Reason);
         }
 
         public static async Task<bool> Post2CouchDB(string username, string password, string database, string id)
         {
-            const string ipaddress = "localhost";
-            const string port = "5984";
-
-            string connString = string.Format("http://{0}:{1}@{3}:{4}", username, password, ipaddress, port);
-            //Console.WriteLine(connString);
+            string connString = SetupConnString(username, password);
 
             using (var client = new MyCouchClient(connString, database))
             {
@@ -120,14 +121,14 @@ namespace ConsoleApplication2
         }
 
 
-        public static void SaveArr2File(byte[] byteArr)
+        public static void SaveArr2File(byte[] byteArr, string fileOutPath)
         {
             if (byteArr == null)
             {
                 return;
             }
 
-            File.WriteAllBytes(@"C:\Users\xlu.APPBRIDGE\Desktop\shit.pdf", byteArr);
+            File.WriteAllBytes(fileOutPath, byteArr);
         }
 
         public static byte[] TurnFile2Byte(string filepath)
