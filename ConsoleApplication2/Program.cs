@@ -64,8 +64,8 @@ namespace AppBridgeMyCouchTest
             Student s = new Student();
             s.Name = "for the first time ever to get this work";
             s.Gpa = 80;
-            s.Description = "this is gonna be anwesome description that i post to the database  fucking awesome";
-            s.Other = "wow this whole newtonsoft thign is actually prtty alwesome";
+            s.Description = "this is gonna be anwesome description that i post to the database awesome";
+            s.Other = "wow this whole newtonsoft thign is actually pretty alwesome";
             s.HerBook = b;
 
             //var byteArr = TurnFile2Byte(filepath);
