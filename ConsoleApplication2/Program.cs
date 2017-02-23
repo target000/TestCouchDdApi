@@ -20,6 +20,10 @@ namespace AppBridgeMyCouchTest
         private string Password { get; set; }
         private string ConnString { get; set; }
 
+        private string filepath = @"C:\Users\xlu.APPBRIDGE\Desktop\db_comp.pdf";
+
+        private string fileOutPath = @"C:\Users\xlu.APPBRIDGE\Desktop\nice_crap.pdf";
+
         public MyCouchTest()
         {
             Username = "root";
@@ -43,18 +47,14 @@ namespace AppBridgeMyCouchTest
 
         static void Main(string[] args)
         {
-            MyCouchTest test = new MyCouchTest();
+            Test();
 
-            // for db access
-            string databaseName = "t1";
-            string documentID = "whatever";
-            string attachmentName = "test1";
+            Console.WriteLine("End of program!");
+            Console.ReadKey();
+        }
 
-            // for local file io
-            string filepath = @"C:\Users\xlu.APPBRIDGE\Desktop\db_comp.pdf";
-            string fileOutPath = @"C:\Users\xlu.APPBRIDGE\Desktop\nice_crap.pdf";
-
-            // Object mockup
+        public static object GenerateTestObject()
+        {
             Book b = new Book();
             b.Name = "This show it is updated";
             b.Author = "me";
@@ -68,16 +68,22 @@ namespace AppBridgeMyCouchTest
             s.Other = "wow this whole newtonsoft thign is actually pretty alwesome";
             s.HerBook = b;
 
-            //var byteArr = TurnFile2Byte(filepath);
-            //PostAttachment(byteArr, username, password, database, id);
+            return s;
+        }
 
-            //var byteArr = GetAttachmentFromCouch(documentId, attachmentName, username, password, database);
-            //var byteArrRes = byteArr.Result;
+        public static async void Test()
+        {
+            // for db access
+            string documentID = "whatever";
+            string username = "root";
+            string password = "111111";
+            string database = "stuff";
 
-            //ByteArr2File(byteArrRes, fileOutPath);
+            object o = GenerateTestObject();
 
+            string jsonString = JsonConvert.SerializeObject(o);
 
-            Console.ReadKey();
+            await PostJson2Couch2(username, password, database, documentID, jsonString);
         }
 
         private static string SetupConnString(string username, string password, string ipAddress = "localhost", int port = 5984)
@@ -117,8 +123,26 @@ namespace AppBridgeMyCouchTest
             var response = await client.Attachments.PutAsync(request);
         }
 
+        // note this method can directly push object up
+        public static async Task<bool> PostEntity2Couch(string username, string password, string database, string documentId, object o)
+        {
+            string connString = SetupConnString(username, password);
+
+            using (var client = new MyCouchClient(connString, database))
+            {
+                var response = await client.Entities.PutAsync(o);
+
+                if (!response.IsSuccess)
+                {
+                    return false;
+                }
+
+                return true;
+            }
+        }
+
         /// <summary>
-        /// This method will push object as a json string up to the CouchDb database
+        /// This method will push json string up to the CouchDb database
         /// </summary>
         /// <param name="username">username to access the db</param>
         /// <param name="password">password to access the db</param>
@@ -126,14 +150,12 @@ namespace AppBridgeMyCouchTest
         /// <param name="documentId">the document within the db</param>
         /// <param name="o">Input object to be pushed up to the database</param>
         /// <returns></returns>
-        public static async Task<bool> PostJson2Couch(string username, string password, string database, string documentId, object o)
+        public static async Task<bool> PostJson2Couch(string username, string password, string database, string documentId, string jsonString)
         {
             string connString = SetupConnString(username, password);
 
             using (var client = new MyCouchClient(connString, database))
             {
-                string jsonString = Object2JsonString(o);
-
                 DocumentHeaderResponse response = await client.Documents.PutAsync(documentId, jsonString);
 
                 if (!response.IsSuccess)
@@ -142,6 +164,24 @@ namespace AppBridgeMyCouchTest
                 }
 
                 return true;
+            }
+        }
+
+        public static async Task<bool> PostJson2Couch2(string username, string password, string database, string documentId, string jsonString)
+        {
+            string connString = SetupConnString(username, password);
+
+            using (var store = new MyCouchStore(connString, database))
+            {
+                try
+                {
+                    var docHeader = await store.StoreAsync(jsonString);
+                    return true;
+                }
+                catch (Exception ex)
+                {
+                    return false;
+                }
             }
         }
 
