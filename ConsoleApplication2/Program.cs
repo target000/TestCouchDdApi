@@ -100,15 +100,32 @@ namespace AppBridgeMyCouchTest
             return response.Content;
         }
 
-        public static async void PostAttachment2Couch(byte[] byteArr, string username, string password, string database, string id)
+        /// <summary>
+        /// This method will push the attachment to a document in the db
+        /// </summary>
+        /// <param name="byteArr">file byte array representation</param>
+        /// <param name="username"></param>
+        /// <param name="password"></param>
+        /// <param name="database"></param>
+        /// <param name="documentId">the document</param>
+        public static async void PostAttachment2Couch(byte[] byteArr, string username, string password, string database, string documentId)
         {
             string connString = SetupConnString(username, password);
 
-            var request = new PutAttachmentRequest(id, "test1", HttpContentTypes.Text, byteArr);
+            var request = new PutAttachmentRequest(documentId, "test1", HttpContentTypes.Text, byteArr);
             var client = new MyCouchClient(connString, database);
             var response = await client.Attachments.PutAsync(request);
         }
 
+        /// <summary>
+        /// This method will push object as a json string up to the CouchDb database
+        /// </summary>
+        /// <param name="username">username to access the db</param>
+        /// <param name="password">password to access the db</param>
+        /// <param name="database">name of the db</param>
+        /// <param name="documentId">the document within the db</param>
+        /// <param name="o">Input object to be pushed up to the database</param>
+        /// <returns></returns>
         public static async Task<bool> PostJson2Couch(string username, string password, string database, string documentId, object o)
         {
             string connString = SetupConnString(username, password);
