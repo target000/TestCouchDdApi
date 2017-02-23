@@ -14,20 +14,47 @@ using System.Threading.Tasks;
 
 namespace AppBridgeMyCouchTest
 {
-    class Program
+    class MyCouchTest
     {
+        private string Username { get; set; }
+        private string Password { get; set; }
+        private string ConnString { get; set; }
+
+        public MyCouchTest()
+        {
+            Username = "root";
+            Password = "111111";
+
+            InitializeConnString();
+        }
+
+        public MyCouchTest(string username, string password)
+        {
+            Username = username;
+            Password = password;
+
+            InitializeConnString();
+        }
+
+        public void InitializeConnString()
+        {
+            ConnString = SetupConnString(Username, Password);
+        }
+
         static void Main(string[] args)
         {
-            string username = "root";
-            string password = "111111";
-            string database = "t1";
-            string id = "whatever";
+            MyCouchTest test = new MyCouchTest();
 
-            string filepath = @"C:\Users\xlu.APPBRIDGE\Desktop\db_comp.pdf";
+            // for db access
+            string databaseName = "t1";
+            string documentID = "whatever";
             string attachmentName = "test1";
-            string documentId = "whatever";
+
+            // for local file io
+            string filepath = @"C:\Users\xlu.APPBRIDGE\Desktop\db_comp.pdf";
             string fileOutPath = @"C:\Users\xlu.APPBRIDGE\Desktop\nice_crap.pdf";
 
+            // Object mockup
             Book b = new Book();
             b.Name = "This show it is updated";
             b.Author = "me";
@@ -44,12 +71,13 @@ namespace AppBridgeMyCouchTest
             //var byteArr = TurnFile2Byte(filepath);
             //PostAttachment(byteArr, username, password, database, id);
 
-            var byteArr = GetAttachmentFromCouch(documentId, attachmentName, username, password, database);
-            var byteArrRes = byteArr.Result;
+            //var byteArr = GetAttachmentFromCouch(documentId, attachmentName, username, password, database);
+            //var byteArrRes = byteArr.Result;
 
-            ByteArr2File(byteArrRes, fileOutPath);
+            //ByteArr2File(byteArrRes, fileOutPath);
 
-            //Console.ReadKey();
+
+            Console.ReadKey();
         }
 
         private static string SetupConnString(string username, string password, string ipAddress = "localhost", int port = 5984)
@@ -59,9 +87,7 @@ namespace AppBridgeMyCouchTest
                 return null;
             }
 
-            string connString = string.Format("http://{0}:{1}@{2}:{3}", username, password, ipAddress, port);
-
-            return connString;
+            return string.Format("http://{0}:{1}@{2}:{3}", username, password, ipAddress, port);
         }
 
         public static async Task<byte[]> GetAttachmentFromCouch(string documentId, string attachmentName, string username, string password, string database)
@@ -81,26 +107,6 @@ namespace AppBridgeMyCouchTest
             var request = new PutAttachmentRequest(id, "test1", HttpContentTypes.Text, byteArr);
             var client = new MyCouchClient(connString, database);
             var response = await client.Attachments.PutAsync(request);
-
-            //Console.WriteLine(response.IsSuccess);
-            //Console.WriteLine(response.Reason);
-        }
-
-        public static string Object2JsonString(Object o)
-        {
-            if (o == null)
-            {
-                return null;
-            }
-
-            try
-            {
-                return JsonConvert.SerializeObject(o);
-            }
-            catch (Exception ex)
-            {
-                return null;
-            }
         }
 
         public static async Task<bool> PostJson2Couch(string username, string password, string database, string documentId, object o)
@@ -122,23 +128,34 @@ namespace AppBridgeMyCouchTest
             }
         }
 
-        public static void ByteArr2File(byte[] byteArr, string fileOutPath)
+        /// <summary>
+        /// Convert an object to json string
+        /// </summary>
+        /// <param name="o">Any object</param>
+        /// <returns>Json formatted string</returns>
+        public static string Object2JsonString(object o)
         {
-            if (byteArr == null)
+            if (o == null)
             {
-                return;
+                return null;
             }
 
             try
             {
-                File.WriteAllBytes(fileOutPath, byteArr);
+                return JsonConvert.SerializeObject(o);
             }
             catch (Exception ex)
             {
-                return;
+                return null;
             }
         }
 
+        /// <summary>
+        /// File.ReadAllBytes() method will be subject to 4.2 GB limit
+        /// The default max size of attachment is 4 GB which can be changed to a larger value in the Couchdb config file
+        /// </summary>
+        /// <param name="filepath">the file path of the document</param>
+        /// <returns>byte array counterpart of the original file</returns>
         public static byte[] File2ByteArr(string filepath)
         {
             if (string.IsNullOrEmpty(filepath))
@@ -153,6 +170,28 @@ namespace AppBridgeMyCouchTest
             catch (Exception ex)
             {
                 return null;
+            }
+        }
+
+        /// <summary>
+        /// Convert a byte array to a file
+        /// </summary>
+        /// <param name="byteArr">byte array to be converted</param>
+        /// <param name="fileOutPath">the output file path of the file converted from the byte array</param>
+        public static void ByteArr2File(byte[] byteArr, string fileOutPath)
+        {
+            if (byteArr == null)
+            {
+                return;
+            }
+
+            try
+            {
+                File.WriteAllBytes(fileOutPath, byteArr);
+            }
+            catch (Exception ex)
+            {
+                return;
             }
         }
 
