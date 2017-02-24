@@ -48,6 +48,10 @@ namespace AppBridgeMyCouchTest
 
         static void Main(string[] args)
         {
+
+            string test1 = "";
+            Console.WriteLine(string.IsNullOrEmpty(test1));
+
             Test();
 
             Console.WriteLine("End of program!");
@@ -106,27 +110,43 @@ namespace AppBridgeMyCouchTest
             }
         }
 
-        public static async Task<string> GetDatabases(string username, string password)
+        public static async Task<IList<string>> GetDatabases(string username, string password)
         {
+            if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(username))
+            {
+                return null;
+            }
+
             string connString = SetupConnString(username, password);
+            const string getAllDatabases = @"/_all_dbs";
 
             using (var client = new MyCouchServerClient(connString))
             {
-                HttpRequest httpRequest = new MyCouch.Net.HttpRequest(HttpMethod.Get, @"/_all_dbs");
+                HttpRequest httpRequest = new HttpRequest(HttpMethod.Get, getAllDatabases);
 
                 var response = await client.Connection.SendAsync(httpRequest);
                 string content = await response.Content.ReadAsStringAsync();
 
-                IList<string> stuff = JsonConvert.DeserializeObject<IList<string>>(content);
+                IList<string> dbNames = JsonConvert.DeserializeObject<IList<string>>(content);
 
-                Console.WriteLine(stuff);
-                return content;
+                // remove the ones that are auto generated
+                const string globalChanges = "_global_changes";
+                const string metadata = "_metadata";
+                const string replicator = "_replicator";
+                const string users = "_users";
+
+                dbNames.Remove(globalChanges);
+                dbNames.Remove(metadata);
+                dbNames.Remove(replicator);
+                dbNames.Remove(users);
+
+                return dbNames;
             }
         }
 
         private static string SetupConnString(string username, string password, string ipAddress = "localhost", int port = 5984)
         {
-            if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password))
+            if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
             {
                 return null;
             }
