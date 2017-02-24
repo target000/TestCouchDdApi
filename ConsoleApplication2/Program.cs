@@ -9,6 +9,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -74,16 +75,53 @@ namespace AppBridgeMyCouchTest
         public static async void Test()
         {
             // for db access
-            string documentID = "whatever";
+            string documentID = "xyz";
             string username = "root";
             string password = "111111";
             string database = "stuff";
 
-            object o = GenerateTestObject();
+            //object o = GenerateTestObject();
 
-            string jsonString = JsonConvert.SerializeObject(o);
+            //string jsonString = JsonConvert.SerializeObject(o);
 
-            await PostJson2Couch2(username, password, database, documentID, jsonString);
+            var stuf = await GetDatabases(username, password);
+            Console.WriteLine(stuf);
+        }
+
+        public static async Task<bool> PostJson2Couch2(string username, string password, string database, string jsonString)
+        {
+            string connString = SetupConnString(username, password);
+
+            using (var store = new MyCouchStore(connString, database))
+            {
+                try
+                {
+                    var docHeader = await store.StoreAsync(jsonString);
+                    return true;
+                }
+                catch (Exception ex)
+                {
+                    return false;
+                }
+            }
+        }
+
+        public static async Task<string> GetDatabases(string username, string password)
+        {
+            string connString = SetupConnString(username, password);
+
+            using (var client = new MyCouchServerClient(connString))
+            {
+                HttpRequest httpRequest = new MyCouch.Net.HttpRequest(HttpMethod.Get, @"/_all_dbs");
+
+                var response = await client.Connection.SendAsync(httpRequest);
+                string content = await response.Content.ReadAsStringAsync();
+
+                IList<string> stuff = JsonConvert.DeserializeObject<IList<string>>(content);
+
+                Console.WriteLine(stuff);
+                return content;
+            }
         }
 
         private static string SetupConnString(string username, string password, string ipAddress = "localhost", int port = 5984)
@@ -167,23 +205,7 @@ namespace AppBridgeMyCouchTest
             }
         }
 
-        public static async Task<bool> PostJson2Couch2(string username, string password, string database, string documentId, string jsonString)
-        {
-            string connString = SetupConnString(username, password);
 
-            using (var store = new MyCouchStore(connString, database))
-            {
-                try
-                {
-                    var docHeader = await store.StoreAsync(jsonString);
-                    return true;
-                }
-                catch (Exception ex)
-                {
-                    return false;
-                }
-            }
-        }
 
         /// <summary>
         /// Convert an object to json string
