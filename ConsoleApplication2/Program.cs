@@ -81,13 +81,14 @@ namespace AppBridgeMyCouchTest
             string documentID = "xyz";
             string username = "root";
             string password = "111111";
-            string dbname = "stuff";
+            string dbname = "stufdsfdsff";
 
             //object o = GenerateTestObject();
 
             //string jsonString = JsonConvert.SerializeObject(o);
 
-            var stuf = await GetDatabase(username, password, dbname);
+            //var stuf = await GetDatabase(username, password, dbname);
+            var stuf = await DatabaseExist(username, password, dbname);
             Console.WriteLine(stuf);
         }
 
@@ -174,6 +175,23 @@ namespace AppBridgeMyCouchTest
                 dbNames.Remove(users);
 
                 return dbNames;
+            }
+        }
+
+        public static async Task<bool> DatabaseExist(string username, string password, string database)
+        {
+            string connString = SetupConnString(username, password);
+
+            using (var client = new MyCouchClient(connString, database))
+            {
+                GetDatabaseResponse response = await client.Database.GetAsync();
+
+                if (!response.IsSuccess)
+                {
+                    return false;
+                }
+
+                return true;
             }
         }
 
