@@ -57,6 +57,26 @@ namespace AppBridgeMyCouchTest
             Console.ReadKey();
         }
 
+        public static async void Test()
+        {
+            // for db access
+            string documentID = "xyz";
+            string username = "root";
+            string password = "111111";
+            string dbname = "shit";
+
+            //object o = GenerateTestObject();
+
+            //string jsonString = JsonConvert.SerializeObject(o);
+
+            //var stuf = await GetDatabase(username, password, dbname);
+            //var stuf = await DatabaseExist(username, password, dbname);
+            //var stuf = await DeleteDatabase(username, password, dbname);
+            var stuf = await CreateDatabase(username, password, dbname);
+
+            Console.WriteLine(stuf);
+        }
+
         public static object GenerateTestObject()
         {
             Book b = new Book();
@@ -73,23 +93,6 @@ namespace AppBridgeMyCouchTest
             s.HerBook = b;
 
             return s;
-        }
-
-        public static async void Test()
-        {
-            // for db access
-            string documentID = "xyz";
-            string username = "root";
-            string password = "111111";
-            string dbname = "stufdsfdsff";
-
-            //object o = GenerateTestObject();
-
-            //string jsonString = JsonConvert.SerializeObject(o);
-
-            //var stuf = await GetDatabase(username, password, dbname);
-            var stuf = await DatabaseExist(username, password, dbname);
-            Console.WriteLine(stuf);
         }
 
         public static async Task<bool> PostJson2Couch2(string username, string password, string database, string jsonString)
@@ -178,11 +181,11 @@ namespace AppBridgeMyCouchTest
             }
         }
 
-        public static async Task<bool> DatabaseExist(string username, string password, string database)
+        public static async Task<bool> DatabaseExist(string username, string password, string databaseName)
         {
             string connString = SetupConnString(username, password);
 
-            using (var client = new MyCouchClient(connString, database))
+            using (var client = new MyCouchClient(connString, databaseName))
             {
                 GetDatabaseResponse response = await client.Database.GetAsync();
 
@@ -193,6 +196,44 @@ namespace AppBridgeMyCouchTest
 
                 return true;
             }
+        }
+
+        public static async Task<bool> DeleteDatabase(string username, string password, string databaseName)
+        {
+            string connString = SetupConnString(username, password);
+
+            try
+            {
+                using (var client = new MyCouchServerClient(connString))
+                {
+                    await client.Databases.DeleteAsync(databaseName);
+                }
+            }
+            catch (Exception ex)
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        public static async Task<bool> CreateDatabase(string username, string password, string databaseName)
+        {
+            string connString = SetupConnString(username, password);
+
+            try
+            {
+                using (var client = new MyCouchServerClient(connString))
+                {
+                    await client.Databases.PutAsync(databaseName);
+                }
+            }
+            catch (Exception ex)
+            {
+                return false;
+            }
+
+            return true;
         }
 
         private static string SetupConnString(string username, string password, string ipAddress = "localhost", int port = 5984)
