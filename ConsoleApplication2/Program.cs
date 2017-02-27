@@ -60,10 +60,11 @@ namespace AppBridgeMyCouchTest
         public static async void Test()
         {
             // for db access
-            string documentID = "xyz";
+            string documentID = "68e56facc00392d9a35dde468600e9fd";
             string username = "root";
             string password = "111111";
-            string dbname = "shit";
+            string dbname = "stuff";
+            string documentRev = "1-94f74477074bf47e6b4d3222f78ce01b";
 
             //object o = GenerateTestObject();
 
@@ -72,7 +73,10 @@ namespace AppBridgeMyCouchTest
             //var stuf = await GetDatabase(username, password, dbname);
             //var stuf = await DatabaseExist(username, password, dbname);
             //var stuf = await DeleteDatabase(username, password, dbname);
-            var stuf = await CreateDatabase(username, password, dbname);
+            //var stuf = await CreateDatabase(username, password, dbname);
+            //var stuf = await DeleteDocument(username, password, dbname, documentID, documentRev);
+
+            var stuf = await GetDocument(username, password, dbname, documentID);
 
             Console.WriteLine(stuf);
         }
@@ -386,6 +390,40 @@ namespace AppBridgeMyCouchTest
             }
         }
 
+        public static async Task<string> GetDocument(string username, string password, string database, string documentId)
+        {
+            string connString = SetupConnString(username, password);
+
+            using (var client = new MyCouchClient(connString, database))
+            {
+                var response = await client.Documents.GetAsync(documentId);
+
+                if (!response.IsSuccess)
+                {
+                    return null;
+                }
+
+                return response.Content;
+            }
+        }
+
+        public static async Task<bool> DeleteDocument(string username, string password, string database, string documentId, string documentRev)
+        {
+            string connString = SetupConnString(username, password);
+
+            using (var client = new MyCouchClient(connString, database))
+            {
+                DeleteDocumentRequest deleteDocument = new DeleteDocumentRequest(documentId, documentRev);
+                DocumentHeaderResponse response = await client.Documents.DeleteAsync(deleteDocument);
+
+                if (!response.IsSuccess)
+                {
+                    return false;
+                }
+
+                return true;
+            }
+        }
 
     }
 
