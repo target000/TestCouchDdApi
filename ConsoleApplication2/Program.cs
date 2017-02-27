@@ -76,7 +76,7 @@ namespace AppBridgeMyCouchTest
             //var stuf = await CreateDatabase(username, password, dbname);
             //var stuf = await DeleteDocument(username, password, dbname, documentID, documentRev);
 
-            var stuf = await GetDocument(username, password, dbname, documentID);
+            var stuf = await GetDocumentRevision(username, password, dbname, documentID);
 
             Console.WriteLine(stuf);
         }
@@ -404,6 +404,27 @@ namespace AppBridgeMyCouchTest
                 }
 
                 return response.Content;
+            }
+        }
+
+        public static async Task<string> GetDocumentRevision(string username, string password, string database, string documentId)
+        {
+            string connString = SetupConnString(username, password);
+
+            using (var client = new MyCouchClient(connString, database))
+            {
+                var response = await client.Documents.GetAsync(documentId);
+
+                if (!response.IsSuccess)
+                {
+                    return null;
+                }
+
+
+                JObject jObject = JObject.Parse(response.Content);
+                string revisionId = (string)jObject["_rev"];
+
+                return revisionId;
             }
         }
 
