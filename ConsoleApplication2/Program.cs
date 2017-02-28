@@ -21,9 +21,9 @@ namespace AppBridgeMyCouchTest
         private string Password { get; set; }
         private string ConnString { get; set; }
 
-        private string filepath = @"C:\Users\xlu.APPBRIDGE\Desktop\db_comp.pdf";
+        private static string filepath = @"C:\Users\xlu.APPBRIDGE\Desktop\db_comp.pdf";
 
-        private string fileOutPath = @"C:\Users\xlu.APPBRIDGE\Desktop\nice_crap.pdf";
+        private static string fileOutPath = @"C:\Users\xlu.APPBRIDGE\Desktop\nice_crap.pdf";
 
         public MyCouchTest()
         {
@@ -70,13 +70,15 @@ namespace AppBridgeMyCouchTest
 
             //string jsonString = JsonConvert.SerializeObject(o);
 
+            byte[] byteArr = File2ByteArr(filepath);
+
             //var stuf = await GetDatabase(username, password, dbname);
             //var stuf = await DatabaseExist(username, password, dbname);
             //var stuf = await DeleteDatabase(username, password, dbname);
             //var stuf = await CreateDatabase(username, password, dbname);
             //var stuf = await DeleteDocument(username, password, dbname, documentID, documentRev);
-
-            var stuf = await GetDocumentRevision(username, password, dbname, documentID);
+            //var stuf = await GetDocumentRevision(username, password, dbname, documentID);
+            var stuf = await PostAttachment2Couch(byteArr, username, password, dbname, documentID);
 
             Console.WriteLine(stuf);
         }
@@ -121,7 +123,6 @@ namespace AppBridgeMyCouchTest
         // /stuff/_all_docs 
         // try to map each command to a string
         // the command is a constant value or even maybe a enum
-
 
         public static async Task<IList<string>> GetDatabase(string username, string password, string databaseName)
         {
@@ -268,13 +269,22 @@ namespace AppBridgeMyCouchTest
         /// <param name="password"></param>
         /// <param name="database"></param>
         /// <param name="documentId">the document</param>
-        public static async void PostAttachment2Couch(byte[] byteArr, string username, string password, string database, string documentId)
+        public static async Task<bool> PostAttachment2Couch(byte[] byteArr, string username, string password, string database, string documentId)
         {
-            string connString = SetupConnString(username, password);
+            try
+            {
+                string connString = SetupConnString(username, password);
 
-            var request = new PutAttachmentRequest(documentId, "test1", HttpContentTypes.Text, byteArr);
-            var client = new MyCouchClient(connString, database);
-            var response = await client.Attachments.PutAsync(request);
+                var request = new PutAttachmentRequest(documentId, "test99999", HttpContentTypes.Text, byteArr);
+                var client = new MyCouchClient(connString, database);
+                var response = await client.Attachments.PutAsync(request);
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+
+            return true;
         }
 
         // note this method can directly push object up
