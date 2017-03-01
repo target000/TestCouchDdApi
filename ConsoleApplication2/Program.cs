@@ -23,7 +23,7 @@ namespace AppBridgeMyCouchTest
 
         private static string filepath = @"C:\Users\xlu.APPBRIDGE\Desktop\db_comp.pdf";
 
-        private static string fileOutPath = @"C:\Users\xlu.APPBRIDGE\Desktop\nice_crap.pdf";
+        private static string fileOutPath = @"C:\Users\xlu.APPBRIDGE\Desktop\xi_test.pdf";
 
         public MyCouchTest()
         {
@@ -49,8 +49,6 @@ namespace AppBridgeMyCouchTest
         // ENTRY POINT
         static void Main(string[] args)
         {
-
-
             Test();
 
             Console.WriteLine("End of program!");
@@ -60,11 +58,14 @@ namespace AppBridgeMyCouchTest
         public static async void Test()
         {
             // for db access
-            string documentID = "68e56facc00392d9a35dde468600e9fd";
+            string documentId = "68e56facc00392d9a35dde46860174bf";
+            string revId = "1-967a00dff5e02add41819138abb3284d";
+
             string username = "root";
             string password = "111111";
-            string dbname = "stuff";
-            string documentRev = "1-94f74477074bf47e6b4d3222f78ce01b";
+
+            string database = "shit";
+            string attachmentName = "xitest1";
 
             //object o = GenerateTestObject();
 
@@ -78,7 +79,12 @@ namespace AppBridgeMyCouchTest
             //var stuf = await CreateDatabase(username, password, dbname);
             //var stuf = await DeleteDocument(username, password, dbname, documentID, documentRev);
             //var stuf = await GetDocumentRevision(username, password, dbname, documentID);
-            var stuf = await PostAttachment2Couch(byteArr, username, password, dbname, documentID);
+            var stuf = await PostAttachment2Couch(byteArr, username, password, database, documentId, revId, attachmentName);
+
+            //var stuf = await GetAttachmentFromCouch(documentId, attachmentName, username, password, database);
+            //Console.WriteLine(stuf);
+
+            //ByteArr2File(stuf, fileOutPath);
 
             Console.WriteLine(stuf);
         }
@@ -269,13 +275,13 @@ namespace AppBridgeMyCouchTest
         /// <param name="password"></param>
         /// <param name="database"></param>
         /// <param name="documentId">the document</param>
-        public static async Task<bool> PostAttachment2Couch(byte[] byteArr, string username, string password, string database, string documentId)
+        public static async Task<bool> PostAttachment2Couch(byte[] byteArr, string username, string password, string database, string documentId, string revId, string attachmentName)
         {
             try
             {
                 string connString = SetupConnString(username, password);
 
-                var request = new PutAttachmentRequest(documentId, "test99999", HttpContentTypes.Text, byteArr);
+                var request = new PutAttachmentRequest(documentId, revId, attachmentName, HttpContentTypes.Text, byteArr);
                 var client = new MyCouchClient(connString, database);
                 var response = await client.Attachments.PutAsync(request);
             }
